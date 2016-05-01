@@ -93,7 +93,6 @@ static void slank_cleanup_module(void)
 
 
 
-
 static int slank_init_module(void)
 {
     int result, i;
