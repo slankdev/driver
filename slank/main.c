@@ -30,37 +30,25 @@ module_param(slank_major  , int, S_IRUGO);
 module_param(slank_minor  , int, S_IRUGO);
 module_param(slank_nr_devs, int, S_IRUGO);
 
-struct slank_dev* slank_devices;
 
 
 
-/* int slank_open(struct inode* inode, struct file* filp) */
-/* { */
-/*     struct slank_dev* dev; */
-/*  */
-/*     #<{(| dev = container_of(inode->i_cdev, struct slank_dev, cdev); |)}># */
-/*     filp->private_data = dev; */
-/*  */
-/*     return 0; */
-/* } */
-/*  */
-/*  */
-/* int slank_release(struct inode* inode, struct file* filp) */
-/* { */
-/*     return 0; */
-/* } */
-/*  */
-/*  */
-/*  */
+int slank_open(struct inode* inode, struct file* filp)
+{
+    return 0;
+}
 
+
+int slank_release(struct inode* inode, struct file* filp)
+{
+    return 0;
+}
 
 ssize_t slank_read(struct file* filp, char __user* buf, size_t count, 
         loff_t *f_pops)
 {
     return 0;
 }
-
-
 
 ssize_t slank_write(struct file* filp, const char __user* buf, size_t count, 
         loff_t *f_pops)
@@ -74,14 +62,9 @@ struct file_operations slank_fops = {
     .owner   = THIS_MODULE, 
     .read    = slank_read,
     .write   = slank_write,
-    /* .open    = slank_open, */
-    /* .release = slank_release, */
+    .open    = slank_open,
+    .release = slank_release,
     /* .llseek  = slank_llseek, */
-
-    /* .read    = NULL, */
-    /* .write   = NULL, */
-    .open    = NULL,
-    .release = NULL,
 };
 
 
