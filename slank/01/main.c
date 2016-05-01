@@ -19,7 +19,6 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-/* struct cdev slank_cdev; */
 
 struct slank_dev {
     struct node* head;
@@ -28,14 +27,11 @@ struct slank_dev {
 
 struct slank_dev *slank_devices;
 
-
 int slank_major   = SLANK_MAJOR;
 int slank_minor   = 0;
-int slank_nr_devs = 1;
 
 module_param(slank_major  , int, S_IRUGO);
 module_param(slank_minor  , int, S_IRUGO);
-module_param(slank_nr_devs, int, S_IRUGO);
 
 
 
@@ -78,15 +74,13 @@ struct file_operations slank_fops = {
 
 static void slank_cleanup_module(void)
 {
-    int i;
+    /* int i; */
     dev_t devno = MKDEV(slank_major, slank_minor);
 
-    for (i=0; i<slank_nr_devs; i++) {
-       cdev_del(&slank_devices[i].cdev);
-    }
+    cdev_del(&slank_devices->cdev);
     kfree(slank_devices);
 
-    unregister_chrdev_region(devno, slank_nr_devs);
+    unregister_chrdev_region(devno, 1);
 
 	printk(KERN_ALERT "Goodbye, slankworld\n");
 }
@@ -103,10 +97,10 @@ static int slank_init_module(void)
     /* Allocate device major and minor number */
     if (SLANK_MAJOR) {
         dev = MKDEV(slank_major, slank_minor);
-        result = register_chrdev_region(dev, slank_nr_devs, "slank");
+        result = register_chrdev_region(dev, 1, "slank");
         printk(KERN_NOTICE "slank: major number is %d static allocated\n", slank_major);
     } else {
-        result = alloc_chrdev_region(&dev, slank_minor, slank_nr_devs, "slank");
+        result = alloc_chrdev_region(&dev, slank_minor, 1, "slank");
         slank_major = MAJOR(dev);
         printk(KERN_NOTICE "slank: major number is %d dynamic allocated\n", slank_major);
     }
@@ -116,27 +110,23 @@ static int slank_init_module(void)
     }
 
 
-    /* Allocate slank_devices, operates my device */
-    slank_devices = kmalloc(slank_nr_devs * sizeof(struct slank_dev), GFP_KERNEL);
+    slank_devices = kmalloc(sizeof(struct slank_dev), GFP_KERNEL);
     if (!slank_devices) {
         result = -ENOMEM;
         goto fail;
     }
-    memset(slank_devices, 0, slank_nr_devs*sizeof(struct slank_dev));
+    memset(slank_devices, 0, sizeof(struct slank_dev));
 
 
-    /* init char devices */
-    for (i=0; i<slank_nr_devs; i++) {
-        cdev_init(&slank_devices[i].cdev, &slank_fops);
-        slank_devices[i].cdev.owner = THIS_MODULE;
-        slank_devices[i].cdev.ops   = &slank_fops;
+    cdev_init(&slank_devices->cdev, &slank_fops);
+    slank_devices->cdev.owner = THIS_MODULE;
+    slank_devices->cdev.ops   = &slank_fops;
 
-        result = cdev_add(&slank_devices[i].cdev, dev, 1);
-        if (result) {
-            printk(KERN_NOTICE "Error %d adding slank%d", result, i);
-            goto fail;
-        }
-    }   
+    result = cdev_add(&slank_devices->cdev, dev, 1);
+    if (result) {
+        printk(KERN_NOTICE "Error %d adding slank", result);
+        goto fail;
+    }
 
 	return 0; /* succeed */
 
