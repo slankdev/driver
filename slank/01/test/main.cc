@@ -52,28 +52,30 @@ class device {
 
 int main()
 {
-
+    size_t res;
     uint8_t buf[10];
     device dev;
     
     dev.open(path, O_RDWR);
 
-    memset(buf, 0xff, sizeof buf);
-    pgen::hex(buf, sizeof buf);
+    memset(buf, 0xaa, sizeof buf);
     dev.write(buf, sizeof(buf));
+    pgen::hex(buf, sizeof buf);
 
     memset(buf, 0xee, sizeof buf);
-    pgen::hex(buf, sizeof buf);
     dev.write(buf, sizeof(buf));
+    pgen::hex(buf, sizeof buf);
+
+    memset(buf, 0xff, sizeof buf);
+    dev.write(buf, sizeof(buf));
+    pgen::hex(buf, sizeof buf);
 
     memset(buf, 0, sizeof buf);
-    size_t res = dev.read(buf, sizeof(buf));
-    printf("read: %zd byte read \n", res);
+    res = dev.read(buf, sizeof(buf));
     pgen::hex(buf, res);
 
     memset(buf, 0, sizeof buf);
     res = dev.read(buf, sizeof(buf));
-    printf("read: %zd byte read \n", res);
     pgen::hex(buf, res);
 
     dev.close();

@@ -90,18 +90,18 @@ static void rm_head(void)
 
 int slank_open(struct inode* inode, struct file* filp)
 {
-    slank_devices->head = NULL;
+    /* slank_devices->head = NULL; */
     return 0;
 }
 
 
 int slank_release(struct inode* inode, struct file* filp)
 {
-    while (1) {
-        if (slank_devices->head == NULL)
-            break;
-        rm_head();
-    }
+    /* while (1) { */
+    /*     if (slank_devices->head == NULL) */
+    /*         break; */
+    /*     rm_head(); */
+    /* } */
     return 0;
 }
 
@@ -199,6 +199,7 @@ static int slank_init_module(void)
         goto fail;
     }
 
+    slank_devices->head = NULL;
 	return 0; /* succeed */
 
 fail:
