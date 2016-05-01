@@ -10,25 +10,25 @@ struct node {
     struct node *next;
 };
 
-struct slank_device {
+struct slank_dev {
     struct node *head;
 };
 
 static struct node *alloc_node(size_t size);
-static struct node* get_tail(struct slank_device* dev);
-static void add_tail(struct slank_device* dev, size_t len);
-static void rm_head(struct slank_device* dev);
+static struct node* get_tail(struct slank_dev* dev);
+static void add_tail(struct slank_dev* dev, size_t len);
+static void rm_head(struct slank_dev* dev);
 
 
-void print_device(struct slank_device* dev);
-size_t get_depth(struct slank_device* dev);
+void print_device(struct slank_dev* dev);
+size_t get_depth(struct slank_dev* dev);
 
-void slank_open(struct slank_device* dev)
+void slank_open(struct slank_dev* dev)
 {
     dev->head = NULL;
 }
 
-void slank_close(struct slank_device* dev)
+void slank_close(struct slank_dev* dev)
 {
     while (1) {
         if (dev->head == NULL)
@@ -37,7 +37,7 @@ void slank_close(struct slank_device* dev)
     }
 }
 
-ssize_t slank_read(struct slank_device* dev, void* buf, size_t nbyte)
+ssize_t slank_read(struct slank_dev* dev, void* buf, size_t nbyte)
 {
     struct node* n = dev->head;
     if (n) {
@@ -52,7 +52,7 @@ ssize_t slank_read(struct slank_device* dev, void* buf, size_t nbyte)
     return nbyte;
 }
 
-ssize_t slank_write(struct slank_device* dev, const void* buf, size_t nbyte)
+ssize_t slank_write(struct slank_dev* dev, const void* buf, size_t nbyte)
 {
     add_tail(dev, nbyte);
     struct node* n = get_tail(dev);
@@ -60,7 +60,7 @@ ssize_t slank_write(struct slank_device* dev, const void* buf, size_t nbyte)
     return nbyte;
 }
 
-void slank_info(struct slank_device* dev)
+void slank_info(struct slank_dev* dev)
 {
     struct node* h = dev->head;
     printf("device[");
@@ -79,7 +79,7 @@ void slank_info(struct slank_device* dev)
 int main()
 {
     size_t res;
-    struct slank_device dev;
+    struct slank_dev dev;
 
     slank_open(&dev);
 
@@ -127,7 +127,7 @@ static struct node *alloc_node(size_t size)
     return node;
 }
 
-static struct node* get_tail(struct slank_device* dev)
+static struct node* get_tail(struct slank_dev* dev)
 {
     struct node* n = dev->head;
     while (1) {
@@ -144,7 +144,7 @@ static struct node* get_tail(struct slank_device* dev)
 }
 
 
-void add_tail(struct slank_device* dev, size_t len)
+void add_tail(struct slank_dev* dev, size_t len)
 {
     struct node* tail = get_tail(dev);
     if (tail) {
@@ -155,7 +155,7 @@ void add_tail(struct slank_device* dev, size_t len)
 }
 
 
-void rm_head(struct slank_device* dev)
+void rm_head(struct slank_dev* dev)
 {
     if (dev->head) {
         struct node* next = dev->head->next;
