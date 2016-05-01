@@ -16,6 +16,12 @@ class device {
     private:
         int fd;
     public:
+        
+        ~device()
+        {
+            close();
+        }
+
         void open(const char* path, int oflag)
         {
             fd = ::open(path, oflag);
@@ -60,14 +66,17 @@ int main()
 
     memset(buf, 0xaa, sizeof buf);
     dev.write(buf, sizeof(buf));
+    printf("write aa  ");
     pgen::hex(buf, sizeof buf);
 
-    memset(buf, 0xee, sizeof buf);
+    memset(buf, 0xbb, sizeof buf);
     dev.write(buf, sizeof(buf));
+    printf("write bb  ");
     pgen::hex(buf, sizeof buf);
 
-    memset(buf, 0xff, sizeof buf);
+    memset(buf, 0xcc, sizeof buf);
     dev.write(buf, sizeof(buf));
+    printf("write cc  ");
     pgen::hex(buf, sizeof buf);
 
     memset(buf, 0, sizeof buf);
@@ -78,5 +87,4 @@ int main()
     res = dev.read(buf, sizeof(buf));
     pgen::hex(buf, res);
 
-    dev.close();
 }
