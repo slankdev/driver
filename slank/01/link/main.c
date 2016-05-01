@@ -15,8 +15,6 @@ struct slank_device {
 
 
 
-
-
 static struct node *alloc_node(size_t size)
 {
     struct node *node = malloc(sizeof(struct node));
@@ -24,6 +22,22 @@ static struct node *alloc_node(size_t size)
     node->addr = malloc(node->len);
     node->next = NULL;
     return node;
+}
+
+static struct node* get_tail(struct slank_device* dev)
+{
+    struct node* n = dev->head;
+    while (1) {
+        if (n) {
+            if (n->next)
+                n = n->next;
+            else 
+                break;
+        } else {
+            break;
+        }
+    }
+    return n;
 }
 
 void init_device(struct slank_device* dev)
@@ -59,22 +73,6 @@ size_t get_depth(struct slank_device* dev)
     return i;
 }
 
-static struct node* get_tail(struct slank_device* dev)
-{
-    struct node* n = dev->head;
-    while (1) {
-        if (n) {
-            if (n->next)
-                n = n->next;
-            else 
-                break;
-        } else {
-            break;
-        }
-    }
-    return n;
-}
-
 void add_tail(struct slank_device* dev, size_t len)
 {
     struct node* tail = get_tail(dev);
@@ -85,14 +83,28 @@ void add_tail(struct slank_device* dev, size_t len)
     }
 }
 
+
+void rm_head(struct slank_device* dev)
+{
+    if (dev->head) {
+        struct node* next = dev->head->next;
+        free(dev->head->addr);
+        free(dev->head);
+        dev->head = next;
+    }
+    return;
+}
+
+
 int main()
 {
     struct slank_device dev;
     init_device(&dev);
 
     add_tail(&dev, 10);
-    add_tail(&dev, 20);
     add_tail(&dev, 30);
+    rm_head(&dev);
+    add_tail(&dev, 20);
 
     print_device(&dev);
     printf("depth is %zd \n", get_depth(&dev));
