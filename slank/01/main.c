@@ -22,6 +22,7 @@ MODULE_LICENSE("Dual BSD/GPL");
 /* struct cdev slank_cdev; */
 
 struct slank_dev {
+    struct node* head;
     struct cdev cdev;
 };
 
@@ -83,6 +84,8 @@ static void slank_cleanup_module(void)
     for (i=0; i<slank_nr_devs; i++) {
        cdev_del(&slank_devices[i].cdev);
     }
+    kfree(slank_devices);
+
     unregister_chrdev_region(devno, slank_nr_devs);
 
 	printk(KERN_ALERT "Goodbye, slankworld\n");
