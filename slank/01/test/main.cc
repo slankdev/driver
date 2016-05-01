@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <pgen2.h>
+
 const char* path = "/dev/slank";
 
 class device {
@@ -17,6 +19,7 @@ class device {
         void open(const char* path, int oflag)
         {
             fd = ::open(path, oflag);
+            printf("open: %d is fd \n", fd);
             if (fd < 0) {
                 perror("open");
                 exit(-1);
@@ -49,30 +52,29 @@ class device {
 
 int main()
 {
-    int fd = open(path, O_RDWR);
-    printf("open: %d is fd \n", fd);
-    if (fd < 0) {
-        perror("open");
-        return -1;
-    }
 
     uint8_t buf[10];
+    device dev;
+    
+    dev.open(path, O_RDWR);
+
     memset(buf, 0xff, sizeof buf);
-    ssize_t res = write(fd, buf, sizeof(buf));
-    printf("write: %zd byte wrote \n", res);
-    if (res < 0) {
-        perror("write");
-        exit(-1);
-    }
+    pgen::hex(buf, sizeof buf);
+    dev.write(buf, sizeof(buf));
+
+    memset(buf, 0xee, sizeof buf);
+    pgen::hex(buf, sizeof buf);
+    dev.write(buf, sizeof(buf));
 
     memset(buf, 0, sizeof buf);
-    res = read(fd, buf, sizeof(buf));
+    size_t res = dev.read(buf, sizeof(buf));
     printf("read: %zd byte read \n", res);
-    if (res < 0) {
-        perror("read");
-        exit(-1);
-    }
+    pgen::hex(buf, res);
 
+    memset(buf, 0, sizeof buf);
+    res = dev.read(buf, sizeof(buf));
+    printf("read: %zd byte read \n", res);
+    pgen::hex(buf, res);
 
-    close(fd);
+    dev.close();
 }
