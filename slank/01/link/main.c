@@ -77,12 +77,12 @@ static void rm_head(void)
 
 
 
-void slank_open()
+void slank_init()
 {
     slank_devices->head = NULL;
 }
 
-void slank_close()
+void slank_exit()
 {
     while (1) {
         if (slank_devices->head == NULL)
@@ -91,27 +91,27 @@ void slank_close()
     }
 }
 
-ssize_t slank_read(void* buf, size_t nbyte)
+ssize_t slank_read(void* buf, size_t count)
 {
     struct node* n = slank_devices->head;
     if (n) {
-        if (nbyte > n->len)
-            nbyte = n->len;
+        if (count > n->len)
+            count = n->len;
 
-        copy_to_user(buf, n->data, nbyte);
+        copy_to_user(buf, n->data, count);
         rm_head();
     } else {
-        nbyte = 0;
+        count = 0;
     }
-    return nbyte;
+    return count;
 }
 
-ssize_t slank_write(const void* buf, size_t nbyte)
+ssize_t slank_write(const void* buf, size_t count)
 {
-    add_tail(nbyte);
+    add_tail(count);
     struct node* n = get_tail();
-    copy_from_user(n->data, buf, nbyte);
-    return nbyte;
+    copy_from_user(n->data, buf, count);
+    return count;
 }
 
 void slank_info()
@@ -137,7 +137,7 @@ int main()
     uint8_t buf2[11];
     slank_devices = (struct slank_dev*)kmalloc(sizeof(struct slank_dev), GFP_KERNEL);
 
-    slank_open();
+    slank_init();
 
     res = slank_write(buf1, sizeof buf1);
     res = slank_write(buf2, sizeof buf2);
@@ -149,7 +149,7 @@ int main()
     res = slank_read(buf1, sizeof buf1);
 
     slank_info();
-    slank_close();
+    slank_exit();
     kfree(slank_devices);
     return 0;
 }
