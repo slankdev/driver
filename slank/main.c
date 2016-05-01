@@ -3,18 +3,33 @@
 #include <linux/init.h>
 #include <linux/module.h>
 
+#include <linux/ioctl.h>
+#include <linux/cdev.h>
+#include <linux/semaphore.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 /* #include <linux/uaccess.h> */
 
-#include "slank.h"
+#ifndef SLANK_NR_DEVS
+#define SLANK_NR_DEVS 4
+#endif
 
 MODULE_LICENSE("Dual BSD/GPL");
 
+struct slank_dev {
+    uint8_t* data; 
+    struct semaphore sem;
+    struct cdev cdev;
+};
 
-int slank_major;
+extern int slank_major;
+
+int slank_p_init(dev_t dev);
+void slank_p_cleanup(void);
+
+int slank_major   = 100;
 int slank_minor   = 0;
 int slank_nr_devs = SLANK_NR_DEVS;
 
@@ -55,7 +70,7 @@ int slank_release(struct inode* inode, struct file* filp)
 /* ssize_t slank_read(struct file* filp, char __user* buf, size_t count,  */
 /*         loff_t *f_pops) */
 /* { */
-/*     return 1; */
+/*     return 0; */
 /* } */
 
 
@@ -63,14 +78,14 @@ int slank_release(struct inode* inode, struct file* filp)
 /* ssize_t slank_write(struct file* filp, const char __user* buf, size_t count,  */
 /*         loff_t *f_pops) */
 /* { */
-/*     return 1; */
+/*     return 0; */
 /* } */
 
 
 
 /* loff_t slank_llseek(struct file* filp, loff_t off, int whence) */
 /* { */
-/*     return 1; */
+/*     return 0; */
 /* } */
 /*  */
 
@@ -133,9 +148,12 @@ static int slank_init_module(void)
 	printk(KERN_ALERT "I'm slankdev. Nice to meet you.\n");
 
     /* Alloc major device number */
-    result = alloc_chrdev_region(&dev, slank_minor, slank_nr_devs, "slank");
-    slank_major = MAJOR(dev);
-    printk(KERN_NOTICE "slank: major number is %d dynamic allocated\n", slank_major);
+    // result = alloc_chrdev_region(&dev, slank_minor, slank_nr_devs, "slank");
+    // slank_major = MAJOR(dev);
+    // printk(KERN_NOTICE "slank: major number is %d dynamic allocated\n", slank_major);
+
+	dev = MKDEV(slank_major, slank_minor);
+	result = register_chrdev_region(dev, slank_nr_devs, "slank");
 
     if (result < 0) {
         printk(KERN_WARNING "slank: can't get major %d\n", slank_major);
