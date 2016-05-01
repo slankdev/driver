@@ -64,7 +64,6 @@ struct file_operations slank_fops = {
     .write   = slank_write,
     .open    = slank_open,
     .release = slank_release,
-    /* .llseek  = slank_llseek, */
 };
 
 
@@ -106,7 +105,6 @@ static int slank_init_module(void)
     }
 
     for (i=0; i<slank_nr_devs; i++) {
-        
         cdev_init(&slank_cdev, &slank_fops);
         slank_cdev.owner = THIS_MODULE;
         slank_cdev.ops = &slank_fops;
@@ -116,7 +114,6 @@ static int slank_init_module(void)
             printk(KERN_NOTICE "Error %d adding slank%d", result, i);
             goto fail;
         }
-
     }   
 
 	return 0; /* succeed */
