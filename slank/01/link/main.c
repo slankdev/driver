@@ -3,6 +3,12 @@
 #include <stdlib.h>
 
 
+#define kmalloc(A, B) malloc(A)
+#define kfree free
+
+#define copy_to_user(dst, src, count) memcpy(dst, src, count)
+#define copy_from_user(dst, src, count) memcpy(dst, src, count)
+
 
 
 
@@ -14,24 +20,25 @@ struct node {
     struct node *next;
 };
 
-
 struct slank_dev {
     struct node *head;
 };
 
+struct slank_dev *slank_devices;
+
 
 static struct node *alloc_node(size_t size)
 {
-    struct node *node = malloc(sizeof(struct node));
+    struct node *node = kmalloc(sizeof(struct node), GFP_KERNEL);
     node->len  = size;
-    node->data = malloc(node->len);
+    node->data = kmalloc(node->len, GFP_KERNEL);
     node->next = NULL;
     return node;
 }
 
-static struct node* get_tail(struct slank_dev* dev)
+static struct node* get_tail(void)
 {
-    struct node* n = dev->head;
+    struct node* n = slank_devices->head;
     while (1) {
         if (n) {
             if (n->next)
@@ -46,71 +53,70 @@ static struct node* get_tail(struct slank_dev* dev)
 }
 
 
-static void add_tail(struct slank_dev* dev, size_t len)
+static void add_tail(size_t len)
 {
-    struct node* tail = get_tail(dev);
+    struct node* tail = get_tail();
     if (tail) {
         tail->next = alloc_node(len);
     } else {
-        dev->head = alloc_node(len);
+        slank_devices->head = alloc_node(len);
     }
 }
 
 
-static void rm_head(struct slank_dev* dev)
+static void rm_head(void)
 {
-    if (dev->head) {
-        struct node* next = dev->head->next;
-        free(dev->head->data);
-        free(dev->head);
-        dev->head = next;
+    if (slank_devices->head) {
+        struct node* next = slank_devices->head->next;
+        kfree(slank_devices->head->data);
+        kfree(slank_devices->head);
+        slank_devices->head = next;
     }
     return;
 }
 
 
 
-
-void slank_open(struct slank_dev* dev)
+void slank_open()
 {
-    dev->head = NULL;
+    slank_devices->head = NULL;
 }
 
-void slank_close(struct slank_dev* dev)
+void slank_close()
 {
     while (1) {
-        if (dev->head == NULL)
+        if (slank_devices->head == NULL)
             break;
-        rm_head(dev);
+        rm_head();
     }
 }
 
-ssize_t slank_read(struct slank_dev* dev, void* buf, size_t nbyte)
+ssize_t slank_read(void* buf, size_t nbyte)
 {
-    struct node* n = dev->head;
+    struct node* n = slank_devices->head;
     if (n) {
         if (nbyte > n->len)
             nbyte = n->len;
 
-        memcpy(buf, n->data, nbyte);
-        rm_head(dev);
+        copy_to_user(buf, n->data, nbyte);
+        rm_head();
     } else {
         nbyte = 0;
     }
     return nbyte;
 }
 
-ssize_t slank_write(struct slank_dev* dev, const void* buf, size_t nbyte)
+ssize_t slank_write(const void* buf, size_t nbyte)
 {
-    add_tail(dev, nbyte);
-    struct node* n = get_tail(dev);
-    memcpy(n->data, buf, nbyte);
+    add_tail(nbyte);
+    struct node* n = get_tail();
+    copy_from_user(n->data, buf, nbyte);
     return nbyte;
 }
 
-void slank_info(struct slank_dev* dev)
+void slank_info()
 {
-    struct node* h = dev->head;
+    struct node* h = slank_devices->head;
     printf("device[");
     while (1) {
         if (h) {
@@ -129,21 +135,21 @@ int main()
     size_t res;
     uint8_t buf1[10];
     uint8_t buf2[11];
-    struct slank_dev dev;
+    slank_devices = (struct slank_dev*)kmalloc(sizeof(struct slank_dev), GFP_KERNEL);
 
-    slank_open(&dev);
+    slank_open();
 
-    res = slank_write(&dev, buf1, sizeof buf1);
-    res = slank_write(&dev, buf2, sizeof buf2);
-    res = slank_write(&dev, buf2, sizeof buf2);
-    res = slank_write(&dev, buf2, sizeof buf2);
-    res = slank_write(&dev, buf2, sizeof buf2);
+    res = slank_write(buf1, sizeof buf1);
+    res = slank_write(buf2, sizeof buf2);
+    res = slank_write(buf2, sizeof buf2);
+    res = slank_write(buf2, sizeof buf2);
+    res = slank_write(buf2, sizeof buf2);
     
-    res = slank_read(&dev, buf1, sizeof buf1);
-    res = slank_read(&dev, buf1, sizeof buf1);
-    res = slank_read(&dev, buf1, sizeof buf1);
+    res = slank_read(buf1, sizeof buf1);
+    res = slank_read(buf1, sizeof buf1);
 
-    slank_info(&dev);
-    slank_close(&dev);
+    slank_info();
+    slank_close();
+    kfree(slank_devices);
     return 0;
 }
