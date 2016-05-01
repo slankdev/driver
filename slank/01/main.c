@@ -20,6 +20,11 @@
 MODULE_LICENSE("Dual BSD/GPL");
 
 
+struct node {
+    uint8_t *data;
+    size_t   len;
+    struct node *next;
+};
 struct slank_dev {
     struct node* head;
     struct cdev cdev;
@@ -35,28 +40,94 @@ module_param(slank_minor  , int, S_IRUGO);
 
 
 
+static struct node *alloc_node(size_t size)
+{
+    struct node *node = kmalloc(sizeof(struct node), GFP_KERNEL);
+    node->len  = size;
+    node->data = kmalloc(node->len, GFP_KERNEL);
+    node->next = NULL;
+    return node;
+}
+
+static struct node* get_tail(void)
+{
+    struct node* n = slank_devices->head;
+    while (1) {
+        if (n) {
+            if (n->next)
+                n = n->next;
+            else 
+                break;
+        } else {
+            break;
+        }
+    }
+    return n;
+}
+
+
+static void add_tail(size_t len)
+{
+    struct node* tail = get_tail();
+    if (tail) {
+        tail->next = alloc_node(len);
+    } else {
+        slank_devices->head = alloc_node(len);
+    }
+}
+
+
+static void rm_head(void)
+{
+    if (slank_devices->head) {
+        struct node* next = slank_devices->head->next;
+        kfree(slank_devices->head->data);
+        kfree(slank_devices->head);
+        slank_devices->head = next;
+    }
+    return;
+}
 
 int slank_open(struct inode* inode, struct file* filp)
 {
+    slank_devices->head = NULL;
     return 0;
 }
 
 
 int slank_release(struct inode* inode, struct file* filp)
 {
+    while (1) {
+        if (slank_devices->head == NULL)
+            break;
+        rm_head();
+    }
     return 0;
 }
 
 ssize_t slank_read(struct file* filp, char __user* buf, size_t count, 
         loff_t *f_pops)
 {
-    return 0;
+    struct node* n = slank_devices->head;
+    if (n) {
+        if (count > n->len)
+            count = n->len;
+
+        copy_to_user(buf, n->data, count);
+        rm_head();
+    } else {
+        count = 0;
+    }
+    return count;
 }
 
 ssize_t slank_write(struct file* filp, const char __user* buf, size_t count, 
         loff_t *f_pops)
 {
-    return 0;
+    add_tail(count);
+    struct node* n = get_tail();
+    copy_from_user(n->data, buf, count);
+    return count;
 }
 
 
@@ -89,7 +160,7 @@ static void slank_cleanup_module(void)
 
 static int slank_init_module(void)
 {
-    int result, i;
+    int result;
     dev_t dev;
 	printk(KERN_ALERT "I'm slankdev. Nice to meet you.\n");
     
