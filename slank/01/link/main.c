@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 typedef unsigned char uint8_t;
@@ -12,6 +13,108 @@ struct node {
 struct slank_device {
     struct node *head;
 };
+
+static struct node *alloc_node(size_t size);
+static struct node* get_tail(struct slank_device* dev);
+static void add_tail(struct slank_device* dev, size_t len);
+static void rm_head(struct slank_device* dev);
+
+
+void print_device(struct slank_device* dev);
+size_t get_depth(struct slank_device* dev);
+
+void slank_open(struct slank_device* dev)
+{
+    dev->head = NULL;
+}
+
+void slank_close(struct slank_device* dev)
+{
+    while (1) {
+        if (dev->head == NULL)
+            break;
+        rm_head(dev);
+    }
+}
+
+ssize_t slank_read(struct slank_device* dev, void* buf, size_t nbyte)
+{
+    struct node* n = dev->head;
+    if (n) {
+        if (nbyte > n->len)
+            nbyte = n->len;
+
+        memcpy(buf, n->addr, nbyte);
+        rm_head(dev);
+    } else {
+        nbyte = 0;
+    }
+    return nbyte;
+}
+
+ssize_t slank_write(struct slank_device* dev, const void* buf, size_t nbyte)
+{
+    add_tail(dev, nbyte);
+    struct node* n = get_tail(dev);
+    memcpy(n->addr, buf, nbyte);
+    return nbyte;
+}
+
+void slank_info(struct slank_device* dev)
+{
+    struct node* h = dev->head;
+    printf("device[");
+    while (1) {
+        if (h) {
+            printf("%d -> ", h->len);
+            h = h->next;
+        } else {
+            printf("null]\n");
+            break;
+        }
+    }
+}
+
+
+int main()
+{
+    size_t res;
+    struct slank_device dev;
+
+    slank_open(&dev);
+
+    uint8_t buf1[10];
+    memset(buf1, 0xaa, sizeof buf1);
+    uint8_t buf2[11];
+    memset(buf2, 0xbb, sizeof buf2);
+
+    res = slank_write(&dev, buf1, sizeof buf1);
+    res = slank_write(&dev, buf2, sizeof buf2);
+    res = slank_write(&dev, buf2, sizeof buf2);
+    res = slank_write(&dev, buf2, sizeof buf2);
+    res = slank_write(&dev, buf2, sizeof buf2);
+    
+    res = slank_read(&dev, buf1, sizeof buf1);
+    for (size_t i=0; i<res; i++)
+        printf("%02x ", buf1[i]);
+    printf("\n");
+
+    res = slank_read(&dev, buf1, sizeof buf1);
+    for (size_t i=0; i<res; i++)
+        printf("%02x ", buf1[i]);
+    printf("\n");
+
+    res = slank_read(&dev, buf1, sizeof buf1);
+    for (size_t i=0; i<res; i++)
+        printf("%02x ", buf1[i]);
+    printf("\n");
+
+    slank_info(&dev);
+
+    slank_close(&dev);
+    return 0;
+}
+
 
 
 
@@ -40,38 +143,6 @@ static struct node* get_tail(struct slank_device* dev)
     return n;
 }
 
-void init_device(struct slank_device* dev)
-{
-    dev->head = NULL;
-}
-
-void print_device(struct slank_device* dev)
-{
-    struct node* h = dev->head;
-    printf("device[");
-    while (1) {
-        if (h) {
-            printf("%d -> ", h->len);
-            h = h->next;
-        } else {
-            printf("null]\n");
-            break;
-        }
-    }
-}
-
-size_t get_depth(struct slank_device* dev)
-{  
-    size_t i;
-    struct node* h = dev->head;
-    for (i=0; ; i++) {
-        if (h)
-            h = h->next;
-        else
-            break;
-    }
-    return i;
-}
 
 void add_tail(struct slank_device* dev, size_t len)
 {
@@ -94,22 +165,4 @@ void rm_head(struct slank_device* dev)
     }
     return;
 }
-
-
-int main()
-{
-    struct slank_device dev;
-    init_device(&dev);
-
-    add_tail(&dev, 10);
-    add_tail(&dev, 30);
-    rm_head(&dev);
-    add_tail(&dev, 20);
-
-    print_device(&dev);
-    printf("depth is %zd \n", get_depth(&dev));
-    return 0;
-}
-
-
 
