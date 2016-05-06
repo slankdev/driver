@@ -124,8 +124,9 @@ ssize_t slank_read(struct file* filp, char __user* buf, size_t count,
 ssize_t slank_write(struct file* filp, const char __user* buf, size_t count, 
         loff_t *f_pops)
 {
+    struct node* n;
     add_tail(count);
-    struct node* n = get_tail();
+    n = get_tail();
     copy_from_user(n->data, buf, count);
     return count;
 }
