@@ -12,6 +12,10 @@
 #include <linux/slab.h>
 #include <asm/uaccess.h>
 
+#include <linux/semaphore.h>
+#include <linux/errno.h>
+
+
 #ifndef SLANK_MAJOR
 #define SLANK_MAJOR 0
 #endif
@@ -28,6 +32,7 @@ struct node {
 struct slank_dev {
     struct node* head;
     struct cdev cdev;
+    struct semaphore sem;
 };
 
 struct slank_dev *slank_devices;
@@ -88,6 +93,7 @@ static void rm_head(void)
     return;
 }
 
+
 int slank_open(struct inode* inode, struct file* filp)
 {
     /* slank_devices->head = NULL; */
@@ -97,18 +103,19 @@ int slank_open(struct inode* inode, struct file* filp)
 
 int slank_release(struct inode* inode, struct file* filp)
 {
-    /* while (1) { */
-    /*     if (slank_devices->head == NULL) */
-    /*         break; */
-    /*     rm_head(); */
-    /* } */
     return 0;
 }
+
 
 ssize_t slank_read(struct file* filp, char __user* buf, size_t count, 
         loff_t *f_pops)
 {
+    struct slank_dev *dev = filp->private_data;
     struct node* n = slank_devices->head;
+
+    if (down_interruptible(&dev->sem))
+        return -ERESTARTSYS;
+
     if (n) {
         if (count > n->len)
             count = n->len;
@@ -118,18 +125,32 @@ ssize_t slank_read(struct file* filp, char __user* buf, size_t count,
     } else {
         count = 0;
     }
+
+/* out: */
+    up(&dev->sem);
     return count;
 }
+
+
 
 ssize_t slank_write(struct file* filp, const char __user* buf, size_t count, 
         loff_t *f_pops)
 {
+    struct slank_dev *dev = filp->private_data;
     struct node* n;
+
+    if (down_interruptible(&dev->sem))
+        return -ERESTARTSYS;
+
     add_tail(count);
     n = get_tail();
     copy_from_user(n->data, buf, count);
+
+/* out: */
+    up(&dev->sem);
     return count;
 }
+
 
 
 
@@ -189,10 +210,15 @@ static int slank_init_module(void)
     }
     memset(slank_devices, 0, sizeof(struct slank_dev));
 
-
+    /* init semaphore */
+    sema_init(&slank_devices->sem, 1);
+    
+    
+    /* setup char device */
     cdev_init(&slank_devices->cdev, &slank_fops);
     slank_devices->cdev.owner = THIS_MODULE;
     slank_devices->cdev.ops   = &slank_fops;
+
 
     result = cdev_add(&slank_devices->cdev, dev, 1);
     if (result) {
