@@ -141,26 +141,25 @@ main.o: /home/slank/git/linux-device-driver/example/scull_fixed/main.c \
  include/linux/idr.h include/linux/kobject_ns.h include/linux/kref.h \
  include/linux/moduleparam.h include/linux/rbtree_latch.h \
  arch/x86/include/asm/module.h include/asm-generic/module.h \
- include/linux/slab.h include/linux/kmemleak.h include/linux/kasan.h \
- include/linux/fs.h include/linux/kdev_t.h include/uapi/linux/kdev_t.h \
- include/linux/dcache.h include/linux/rculist.h \
- include/linux/rculist_bl.h include/linux/list_bl.h \
- include/linux/bit_spinlock.h include/linux/lockref.h \
- include/linux/path.h include/linux/list_lru.h include/linux/shrinker.h \
- include/linux/radix-tree.h include/linux/pid.h \
+ include/linux/semaphore.h include/linux/slab.h include/linux/kmemleak.h \
+ include/linux/kasan.h include/linux/fs.h include/linux/kdev_t.h \
+ include/uapi/linux/kdev_t.h include/linux/dcache.h \
+ include/linux/rculist.h include/linux/rculist_bl.h \
+ include/linux/list_bl.h include/linux/bit_spinlock.h \
+ include/linux/lockref.h include/linux/path.h include/linux/list_lru.h \
+ include/linux/shrinker.h include/linux/radix-tree.h include/linux/pid.h \
  include/linux/capability.h include/uapi/linux/capability.h \
- include/linux/semaphore.h include/uapi/linux/fiemap.h \
- include/linux/migrate_mode.h include/linux/percpu-rwsem.h \
- include/linux/rcu_sync.h include/linux/blk_types.h \
- include/uapi/linux/fs.h include/uapi/linux/limits.h \
- include/linux/quota.h include/linux/percpu_counter.h \
- include/uapi/linux/dqblk_xfs.h include/linux/dqblk_v1.h \
- include/linux/dqblk_v2.h include/linux/dqblk_qtree.h \
- include/linux/projid.h include/uapi/linux/quota.h \
- include/linux/nfs_fs_i.h include/linux/fcntl.h \
- include/uapi/linux/fcntl.h arch/x86/include/uapi/asm/fcntl.h \
- include/uapi/asm-generic/fcntl.h include/linux/proc_fs.h \
- include/linux/seq_file.h include/linux/cdev.h \
+ include/uapi/linux/fiemap.h include/linux/migrate_mode.h \
+ include/linux/percpu-rwsem.h include/linux/rcu_sync.h \
+ include/linux/blk_types.h include/uapi/linux/fs.h \
+ include/uapi/linux/limits.h include/linux/quota.h \
+ include/linux/percpu_counter.h include/uapi/linux/dqblk_xfs.h \
+ include/linux/dqblk_v1.h include/linux/dqblk_v2.h \
+ include/linux/dqblk_qtree.h include/linux/projid.h \
+ include/uapi/linux/quota.h include/linux/nfs_fs_i.h \
+ include/linux/fcntl.h include/uapi/linux/fcntl.h \
+ arch/x86/include/uapi/asm/fcntl.h include/uapi/asm-generic/fcntl.h \
+ include/linux/proc_fs.h include/linux/seq_file.h include/linux/cdev.h \
  arch/x86/include/asm/uaccess.h arch/x86/include/asm/smap.h \
  arch/x86/include/asm/uaccess_64.h \
  /home/slank/git/linux-device-driver/example/scull_fixed/scull.h
